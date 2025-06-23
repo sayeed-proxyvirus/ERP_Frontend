@@ -1,0 +1,155 @@
+.SignUp-Container {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #121212;
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4));
+  
+  .SignUp-SubContainer {
+    width: 400px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    background-color: transparent;
+
+    .Header {
+      height: 60px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Roboto", sans-serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: #8ab4f8;
+      background-color: rgba(30, 30, 30, 0.9);
+      border-bottom: 1px solid rgba(80, 80, 80, 0.3);
+    }
+
+    .Body {
+      width: 100%;
+      background-color: #2a2a2a;
+      padding: 30px 0;
+      border: none;
+
+      .form {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+
+        .TextField {
+          width: 300px;
+          margin: 10px 0;
+          backdrop-filter: blur(5px);
+        }
+
+        .Roles {
+          display: flex;
+          justify-content: center;
+          margin-top: 20px;
+          width: 100%;
+          
+          .RoleValue {
+            width: auto;
+            margin: 0 10px;
+            color: #e0e0e0;
+          }
+        }
+      }
+    }
+
+    .Buttons {
+      height: 70px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      background-color: #242424;
+      border-top: 1px solid rgba(80, 80, 80, 0.3);
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+
+      .Btn {
+        height: 38px;
+        text-transform: none;
+        font-weight: 500;
+        min-width: 100px;
+      }
+    }
+  }
+}
+
+/* Custom styling for Material UI components */
+.MuiOutlinedInput-root {
+  color: #e0e0e0;
+  background-color: rgba(50, 50, 50, 0.7);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #8ab4f8 !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #8ab4f8 !important;
+  border-width: 2px;
+}
+
+.MuiFormLabel-root {
+  color: #b0b0b0;
+}
+
+.MuiFormLabel-root.Mui-focused {
+  color: #8ab4f8;
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: rgba(100, 100, 100, 0.5) !important;
+}
+
+.MuiRadio-root {
+  color: rgba(150, 150, 150, 0.7) !important;
+}
+
+.MuiRadio-root.Mui-checked {
+  color: #8ab4f8 !important;
+}
+
+.MuiFormControlLabel-label {
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.MuiButton-containedPrimary {
+  background-color: #3a6ea5 !important;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.MuiButton-containedPrimary:hover {
+  background-color: #4a7eb5 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.MuiButton-textPrimary {
+  color: #8ab4f8 !important;
+}
+
+.MuiButton-textPrimary:hover {
+  background-color: rgba(138, 180, 248, 0.08) !important;
+}
+
+/* Snackbar styling */
+.MuiSnackbarContent-root {
+  background-color: #333 !important;
+  color: #fff;
+}
