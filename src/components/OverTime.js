@@ -451,7 +451,7 @@ const OTManagement = () => {
             jobName: worker.jobName || "",
             month: month1,
             cardNo: worker.cardNo || "",
-            hour: worker.hour || 0.00,
+            hour: thrs || 0.00,
             exhour: worker.exhour || 0.00,
             bankAC: worker.bankAcc || worker.bankAC || "",
             bonus: bonusAmount,

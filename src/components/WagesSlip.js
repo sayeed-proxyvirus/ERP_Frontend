@@ -20,6 +20,7 @@ const WSlipManagement = () => {
   const [workerDeductions, setWorkerDeductions] = useState({});
   const [workerAtt_Bonus, setWorkerAtt_Bonus] = useState({});
   const [jobAttBonusData, setJobAttBonusData] = useState({});
+  const [workerAttBonusChecked, setWorkerAttBonusChecked] = useState({});
 
   // API base URL - using https as shown in your curl request
   const API_URL = "https://localhost:44353/api/CrudApplication";
@@ -36,21 +37,26 @@ const WSlipManagement = () => {
     if (workerData && workerData.length > 0) {
       const initialDeductions = {};
       const initialAtt_Bonus = {};
+      const initialCheckboxState = {};
+
       workerData.forEach((worker) => {
         const workerId = worker.id;
         if (workerId) {
-          // Only set if not already in state (preserve user changes)
-          if (workerDeductions[workerId] === undefined) {
+          // Only initialize if the worker ID doesn't exist in our state at all
+          if (!(workerId in workerDeductions)) {
             initialDeductions[workerId] = worker.deduct || 0;
           }
-          // Initialize att_bonus to 0 instead of worker.att_Bonus
-          if (workerAtt_Bonus[workerId] === undefined) {
-            initialAtt_Bonus[workerId] = 0;
+          if (!(workerId in workerAtt_Bonus)) {
+            initialAtt_Bonus[workerId] = worker.att_Bonus || 0;
+          }
+          if (!(workerId in workerAttBonusChecked)) {
+            // Initialize checkbox as checked if worker already has att_Bonus value
+            initialCheckboxState[workerId] = (worker.att_Bonus || 0) > 0;
           }
         }
       });
 
-      // Only update if we have new deductions to add
+      // Only update state if we have new workers to initialize
       if (Object.keys(initialDeductions).length > 0) {
         setWorkerDeductions((prev) => ({
           ...prev,
@@ -63,8 +69,62 @@ const WSlipManagement = () => {
           ...initialAtt_Bonus,
         }));
       }
+      if (Object.keys(initialCheckboxState).length > 0) {
+        setWorkerAttBonusChecked((prev) => ({
+          ...prev,
+          ...initialCheckboxState,
+        }));
+      }
     }
   }, [workerData]);
+
+  // Enhanced handleAttBonusCheckboxChange function with detailed logging
+  const handleAttBonusCheckboxChange = (workerId, workerJobName, isChecked) => {
+    
+
+    // Check if the job name exists in our data
+    const jobAttBonusValue = jobAttBonusData[workerJobName];
+    
+
+    
+
+    // Update checkbox state
+    setWorkerAttBonusChecked((prev) => {
+      const newState = {
+        ...prev,
+        [workerId]: isChecked,
+      };
+      console.log("Updated checkbox state:", newState);
+      return newState;
+    });
+
+    if (isChecked) {
+      // Get the att_bonus value for this worker's job from jobAttBonusData
+      const finalValue = jobAttBonusValue || 0;
+      console.log("Setting att_bonus to:", finalValue);
+
+      setWorkerAtt_Bonus((prev) => {
+        const newState = {
+          ...prev,
+          [workerId]: finalValue,
+        };
+        console.log("Updated att_bonus state:", newState);
+        return newState;
+      });
+    } else {
+      // Clear the att_bonus value when unchecked
+      console.log("Clearing att_bonus (setting to 0)");
+      setWorkerAtt_Bonus((prev) => {
+        const newState = {
+          ...prev,
+          [workerId]: 0,
+        };
+        console.log("Cleared att_bonus state:", newState);
+        return newState;
+      });
+    }
+    console.log("=== END CHECKBOX DEBUG ===");
+  };
 
   const fetchWorkerData = async (sectionsId) => {
     if (!sectionsId) {
@@ -282,18 +342,30 @@ const WSlipManagement = () => {
           const jobsData = response.data.jSearchInformationBySections;
           setJobs(jobsData);
 
-          // Store att_bonus data for each job
+          // Store att_bonus data for each job with enhanced logging
           const attBonusMap = {};
-          jobsData.forEach((job) => {
+          
+          jobsData.forEach((job, index) => {
+            
+
             if (job.jobName) {
-              // Use att_Bonus from the job data, fallback to 0 if not present
-              attBonusMap[job.jobName] = job.att_Bonus || job.attBonus || 0;
+              // Try multiple possible field names for att_bonus
+              const attBonusValue =
+                job.att_Bonus ||
+                job.attBonus ||
+                job.att_bonus ||
+                job.AttBonus ||
+                0;
+              attBonusMap[job.jobName] = attBonusValue;
+              
             }
           });
+
+          
           setJobAttBonusData(attBonusMap);
+          
 
           console.log("Jobs loaded:", jobsData);
-          console.log("Att_bonus data:", attBonusMap);
         } else {
           console.error(
             "Unexpected data format received from API:",
@@ -324,6 +396,10 @@ const WSlipManagement = () => {
     }
   };
 
+  // Add debugging to the table render to see current states
+  // Add this just before your table JSX:
+  
+
   const handleSectionChange = (e) => {
     const sectionValue = e.target.value;
     setSelectedSection(sectionValue);
@@ -331,6 +407,9 @@ const WSlipManagement = () => {
 
     // Reset job selection when section changes
     setSelectedJob("");
+
+    // Clear checkbox state when section changes
+    setWorkerAttBonusChecked({});
 
     // Call fetchJobs with the selected section's ID
     if (sectionValue) {
@@ -347,7 +426,6 @@ const WSlipManagement = () => {
       setWorkerData([]);
     }
   };
-
   const handleJobChange = (e) => {
     const jobName = e.target.value;
     setSelectedJob(jobName);
@@ -361,29 +439,21 @@ const WSlipManagement = () => {
     }));
   };
 
-  // Modified attendance bonus change handler
-  const handleAtt_BonusChange = (workerId, value, worker) => {
-    const numericValue = parseFloat(value) || 0;
-    const currentAttBonus = workerAtt_Bonus[workerId] || 0;
-
-    // Only use fetchJobs att_Bonus when current value is 0 and user enters non-zero
-    let newValue;
-    if (currentAttBonus === 0 && numericValue !== 0) {
-      // Get att_bonus from job data based on worker's job
-      const jobAttBonus = jobAttBonusData[worker.jobName] || 0;
-      newValue = jobAttBonus;
-    } else {
-      // For all other cases, use the entered value
-      newValue = numericValue;
-    }
+  const handleAtt_BonusChange = (workerId, value) => {
+    const numericValue = value === "" ? 0 : parseFloat(value) || 0;
 
     setWorkerAtt_Bonus((prev) => ({
       ...prev,
-      [workerId]: newValue,
+      [workerId]: numericValue,
+    }));
+
+    // Update checkbox state based on whether value is greater than 0
+    setWorkerAttBonusChecked((prev) => ({
+      ...prev,
+      [workerId]: numericValue > 0,
     }));
   };
 
-  
   const calculateWages = (worker, workerId) => {
     const currentDeduct = workerDeductions[workerId] || 0;
     const currentatt_Bonus = workerAtt_Bonus[workerId] || 0;
@@ -424,13 +494,14 @@ const WSlipManagement = () => {
   };
 
   const handleSave = async () => {
+    // Validation checks
     if (!selectedSection) {
       setError("Please select a section before saving");
       return;
     }
 
     if (!selectedMonth) {
-      setError("Please select a month type before saving");
+      setError("Please select a month before saving");
       return;
     }
 
@@ -439,6 +510,13 @@ const WSlipManagement = () => {
       return;
     }
 
+    console.log("Starting save operation...");
+    console.log("Selected Section:", selectedSection);
+    console.log("Selected Month:", selectedMonth);
+    console.log("Filtered Data Length:", filteredData.length);
+    console.log("Worker Deductions:", workerDeductions);
+    console.log("Worker Att_Bonus:", workerAtt_Bonus);
+
     setIsLoading(true);
     setError(null);
 
@@ -446,18 +524,18 @@ const WSlipManagement = () => {
       const updateResults = [];
       const month1 = formatMonthToYYYYMM(selectedMonth);
 
+      console.log("Formatted month for API:", month1);
+
+      // Process each worker
       for (const worker of filteredData) {
         try {
+          // Validate worker ID
           if (!worker.id) {
-            console.warn(
-              `Worker ${
-                worker.name || "Unknown"
-              } doesn't have a valid ID. Skipping update.`
-            );
+            console.warn(`Worker ${worker.name || "Unknown"} missing ID`);
             updateResults.push({
               worker: worker.name || "Unknown",
               success: false,
-              message: "Missing valid worker ID",
+              message: "Missing worker ID",
             });
             continue;
           }
@@ -468,9 +546,10 @@ const WSlipManagement = () => {
           const ot_Amount = worker.ot_Amount || worker.oT_Amount || 0;
           const gross = worker.gross_Wages || 0;
 
-          // Calculate net wages and net pay using the same logic as display
+          // Calculate wages using same logic as display
           const { netWages, netPay } = calculateWages(worker, workerId);
 
+          // Create payload
           const payload = {
             id: parseInt(worker.id),
             name: worker.name || "",
@@ -478,27 +557,28 @@ const WSlipManagement = () => {
             jobName: worker.jobName || "",
             month: month1,
             cardNo: worker.cardNo || "",
-            basic: worker.basic || 0.0,
-            hr: worker.hr || 0.0,
-            medical: worker.medical || 0.0,
-            conv: worker.conv || 0.0,
-            food: worker.food || 0.0,
-            wages: worker.wages || 0.0,
-            days: worker.days || 0,
-            grade: worker.grade || 0,
-            ot_Amount: ot_Amount,
-            ot_Hours: worker.ot_Hours || worker.oT_Hours || 0.0,
-            rate: worker.rate || 0.0,
-            bankAC: worker.bankAcc || worker.bankAC || "",
+            basic: parseFloat(worker.basic) || 0.0,
+            hr: parseFloat(worker.hr) || 0.0,
+            medical: parseFloat(worker.medical) || 0.0,
+            conv: parseFloat(worker.conv) || 0.0,
+            food: parseFloat(worker.food) || 0.0,
+            wages: parseFloat(worker.wages) || 0.0,
+            days: parseInt(worker.days) || 0,
+            grade: parseInt(worker.grade) || 0,
+            ot_Amount: parseFloat(ot_Amount),
+            ot_Hours: parseFloat(worker.ot_Hours || worker.oT_Hours) || 0.0,
+            rate: parseFloat(worker.rate) || 0.0,
+            bankAcc: worker.bankAcc || worker.bankAC || "",
             att_Bonus: att_Bonusamt,
-            gross_Wages: gross,
-            net_Wages: netWages,
-            net_Pay: netPay,
+            gross_Wages: parseFloat(gross),
+            net_Wages: parseFloat(netWages),
+            net_Pay: parseFloat(netPay),
             deduct: deduction,
           };
 
-          console.log(`Payload for worker ${worker.name}:`, payload);
+          // Also add this check to see if the worker ID exists in your state
 
+          // Make API request
           const response = await axios.put(
             `${API_URL}/WagSlipUpdateInformation`,
             payload,
@@ -508,13 +588,20 @@ const WSlipManagement = () => {
               },
             }
           );
+          // Check the response data structure
+          console.log("API Response status:", response.status);
+          console.log("API Response data:", response.data);
 
+          //console.log(`Response for worker ${worker.name}:`, response);
+
+          // Check response
           if (response.status === 200 || response.status === 204) {
             updateResults.push({
               worker: worker.name || "Unknown",
               success: true,
               message: response.data?.message || "Updated successfully",
             });
+            console.log(`Successfully updated worker: ${worker.name}`);
           } else {
             throw new Error(`Unexpected response status: ${response.status}`);
           }
@@ -823,25 +910,65 @@ const WSlipManagement = () => {
                       <td>{worker.food || 0}</td>
                       <td>{worker.days || 0}</td>
                       <td>
-                        <input
-                          type="number"
-                          value={currentatt_Bonus || ""}
-                          onChange={(e) =>
-                            handleAtt_BonusChange(
-                              workerId,
-                              e.target.value,
-                              worker
-                            )
-                          }
-                          placeholder="0.00"
+                        <div
                           style={{
-                            width: "80px",
-                            padding: "4px 6px",
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            textAlign: "center",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
                           }}
-                        />
+                        >
+                          <input
+                            type="checkbox"
+                            checked={workerAttBonusChecked[workerId] || false}
+                            onChange={(e) => {
+                              console.log(
+                                `Checkbox clicked for worker ${workerId}, job: ${worker.jobName}`
+                              );
+                              handleAttBonusCheckboxChange(
+                                workerId,
+                                worker.jobName,
+                                e.target.checked
+                              );
+                            }}
+                            style={{
+                              width: "16px",
+                              height: "16px",
+                              cursor: "pointer",
+                            }}
+                            title={`Job: ${worker.jobName}, att_bonus: ${
+                              jobAttBonusData[worker.jobName] || 0
+                            }`}
+                          />
+                          <input
+                            type="number"
+                            value={currentatt_Bonus || ""}
+                            onChange={(e) => {
+                              console.log(
+                                `Manual input change for worker ${workerId}: ${e.target.value}`
+                              );
+                              handleAtt_BonusChange(workerId, e.target.value);
+                            }}
+                            disabled={!workerAttBonusChecked[workerId]}
+                            placeholder="0.00"
+                            style={{
+                              width: "60px",
+                              padding: "4px 6px",
+                              border: "1px solid #ccc",
+                              borderRadius: "4px",
+                              textAlign: "center",
+                              backgroundColor: workerAttBonusChecked[workerId]
+                                ? "#fff"
+                                : "#f5f5f5",
+                              cursor: workerAttBonusChecked[workerId]
+                                ? "text"
+                                : "not-allowed",
+                              opacity: workerAttBonusChecked[workerId]
+                                ? 1
+                                : 0.6,
+                            }}
+                          />
+                          
+                        </div>
                       </td>
                       <td>
                         <input
