@@ -982,7 +982,7 @@ const WSlipManagement = () => {
                             width: "80px",
                             padding: "4px 6px",
                             border: "1px solid #ccc",
-                            borderRadius: "4px",
+                            borderRadius: "5px",
                             textAlign: "center",
                           }}
                         />
