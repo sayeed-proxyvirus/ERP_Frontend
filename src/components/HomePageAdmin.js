@@ -2,15 +2,20 @@ import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 class HomePage extends Component {
   constructor(props) {
     super(props);
     this.state = {
       activeSubmenu: null,
-      inactivityTimer: null
+      inactivityTimer: null,
+      employeeCount: 0,
+      jobCount: 0,
+      workerCount: 0,
+      sectionsCount: 0,
     };
-    
+
     // Timeout configuration (in milliseconds)
     this.INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
   }
@@ -18,15 +23,19 @@ class HomePage extends Component {
   componentDidMount() {
     // Set up event listeners for user activity
     this.resetInactivityTimer();
-    window.addEventListener('mousemove', this.resetInactivityTimer);
-    window.addEventListener('keydown', this.resetInactivityTimer);
+    window.addEventListener("mousemove", this.resetInactivityTimer);
+    window.addEventListener("keydown", this.resetInactivityTimer);
+    this.handleCEmployee();
+    this.handleCWorker();
+    this.handleCSections();
+    this.handleCJobs();
   }
 
   componentWillUnmount() {
     // Clean up event listeners and timer
-    window.removeEventListener('mouseMove', this.resetInactivityTimer);
-    window.removeEventListener('keydown', this.resetInactivityTimer);
-    
+    window.removeEventListener("mouseMove", this.resetInactivityTimer);
+    window.removeEventListener("keydown", this.resetInactivityTimer);
+
     if (this.state.inactivityTimer) {
       clearTimeout(this.state.inactivityTimer);
     }
@@ -40,39 +49,109 @@ class HomePage extends Component {
 
     // Set new timer
     const newTimer = setTimeout(() => {
-      this.handleSignOut('Session timeout due to inactivity');
+      this.handleSignOut("Session timeout due to inactivity");
     }, this.INACTIVITY_TIMEOUT);
 
     this.setState({ inactivityTimer: newTimer });
-  }
+  };
 
   toggleSubmenu = (menu) => {
     this.setState({
-      activeSubmenu: this.state.activeSubmenu === menu ? null : menu
+      activeSubmenu: this.state.activeSubmenu === menu ? null : menu,
     });
   };
 
-  handleSignOut = (message = 'Signed out successfully') => {
+  handleCEmployee = async () => {
+    try {
+      const response = await axios.get(
+        `https://localhost:44353/api/CrudApplication/ECReadInformation`
+      );
+
+      if (response.data?.isSuccess) {
+        this.setState({
+          employeeCount: response.data.ecreadInformation[0].count || 0,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching employee data:", err);
+      this.setState({
+        employeeCount: 0,
+      });
+    }
+  };
+
+  handleCWorker = async () => {
+    try {
+      const response = await axios.get(
+        `https://localhost:44353/api/CrudApplication/WCReadInformation`
+      );
+
+      if (response.data?.isSuccess) {
+        this.setState({
+          workerCount: response.data.wcreadInformation[0].count || 0,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching worker data:", err);
+      this.setState({
+        workerCount: 0,
+      });
+    }
+  };
+
+  handleCJobs = async () => {
+    try {
+      const response = await axios.get(
+        `https://localhost:44353/api/CrudApplication/JCReadInformation`
+      );
+
+      if (response.data?.isSuccess) {
+        this.setState({
+          jobCount: response.data.jcreadInformation[0].count || 0,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching jobs data:", err);
+      this.setState({
+        jobCount: 0,
+      });
+    }
+  };
+
+  handleCSections = async () => {
+    try {
+      const response = await axios.get(
+        `https://localhost:44353/api/CrudApplication/JSCReadInformation`
+      );
+
+      if (response.data?.isSuccess) {
+        this.setState({
+          sectionsCount: response.data.jscreadInformation[0].count || 0,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching employee data:", err);
+      this.setState({
+        sectionsCount: 0,
+      });
+    }
+  };
+
+  handleSignOut = (message = "Signed out successfully") => {
     // Clear any authentication tokens or user session data
     // For example:
-    localStorage.removeItem('authToken');
-    sessionStorage.removeItem('userSession');
+    localStorage.removeItem("authToken");
+    sessionStorage.removeItem("userSession");
 
     // Use navigate prop to redirect to SignIn page
     const { navigate } = this.props;
-    
-    // Optional: Show a toast or alert about sign out reason
-    ///alert(message);
-
-    // Navigate to SignIn page, replacing current history entry
-    // This prevents going back to the previous page
-    navigate('/SignIn', { replace: true });
-  }
+    navigate("/SignIn", { replace: true });
+  };
 
   render() {
     const { activeSubmenu } = this.state;
     const { navigate } = this.props; // Access navigate from props
-    
+
     return (
       <div className="container-fluid">
         {/* Custom CSS for animations and modern styling */}
@@ -252,192 +331,336 @@ class HomePage extends Component {
           <div className="col-auto col-md-3 col-xl-2 px-0 sidebar">
             <div className="d-flex flex-column align-items-center align-items-sm-start pt-2 text-white min-vh-100 sidebar-scroll">
               {/* Logo/Brand */}
-              <a href="/" className="d-flex align-items-center py-3 mb-md-0 mt-md-0 me-md-auto text-white text-decoration-none ps-3 pe-3 w-100">
+              <a
+                href="/"
+                className="d-flex align-items-center py-3 mb-md-0 mt-md-0 me-md-auto text-white text-decoration-none ps-3 pe-3 w-100"
+              >
                 <span className="fs-4 fw-bolder d-none d-sm-inline">
-                  <span style={{ color: "#3498db" }}>Pro</span>
-                  <span style={{ color: "#ecf0f1" }}>Dash</span>
+                  <span style={{ color: "#3498db" }}>LTD</span>
+                  <span style={{ color: "#ecf0f1" }}>DOT</span>
                 </span>
-                <span className="fs-4 fw-bolder d-inline d-sm-none text-center w-100" style={{ color: "#3498db" }}>PD</span>
+                <span
+                  className="fs-4 fw-bolder d-inline d-sm-none text-center w-100"
+                  style={{ color: "#3498db" }}
+                >
+                  PD
+                </span>
               </a>
               <hr className="dropdown-divider border-top border-secondary opacity-25 w-100 mb-2" />
-              
+
               {/* Main Navigation */}
-              <ul className="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 px-2" id="menu">
+              <ul
+                className="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 px-2"
+                id="menu"
+              >
                 {/* Home */}
                 <li className="nav-item w-100">
-                  <a href="#" className="nav-link d-flex align-items-center text-white py-2 px-3 menu-item active">
+                  <a
+                    href="/"
+                    className="nav-link d-flex align-items-center text-white py-2 px-3 menu-item active"
+                  >
                     <i className="fs-5 bi-house-door nav-icon text-info me-2"></i>
                     <span className="ms-1 d-none d-sm-inline">Home</span>
-                    <span className="status-badge badge bg-success ms-auto d-none d-sm-flex">4</span>
+                    <span className="status-badge badge bg-success ms-auto d-none d-sm-flex">
+                      4
+                    </span>
                   </a>
                 </li>
-                
+
                 {/* Employee */}
                 <li className="nav-item w-100">
-                  <a 
-                    href="#" 
-                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${activeSubmenu === 'dashboard' ? 'active' : ''}`}
+                  <a
+                    href="/"
+                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${
+                      activeSubmenu === "dashboard" ? "active" : ""
+                    }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      this.toggleSubmenu('dashboard');
+                      this.toggleSubmenu("dashboard");
                       navigate("/Employee"); // Using navigate from props
                     }}
                   >
                     <i className="fs-5 bi-speedometer2 nav-icon text-primary me-2"></i>
                     <span className="ms-1 d-none d-sm-inline">Employee</span>
-                    <i className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${activeSubmenu === 'dashboard' ? 'rotate-180' : ''}`}></i>
+                    <i
+                      className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${
+                        activeSubmenu === "dashboard" ? "rotate-180" : ""
+                      }`}
+                    ></i>
                   </a>
-                  <ul className={`nav flex-column ms-1 ps-4 ${activeSubmenu === 'dashboard' ? 'submenu open' : 'submenu'}`}>
+                  <ul
+                    className={`nav flex-column ms-1 ps-4 ${
+                      activeSubmenu === "dashboard" ? "submenu open" : "submenu"
+                    }`}
+                  >
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#3498db" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#3498db" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Analytics</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#2ecc71" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#2ecc71" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Reports</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#e74c3c" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e74c3c" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Metrics</span>
-                        <span className="status-badge badge bg-danger ms-auto d-none d-sm-flex">New</span>
+                        <span className="status-badge badge bg-danger ms-auto d-none d-sm-flex">
+                          New
+                        </span>
                       </a>
                     </li>
                   </ul>
                 </li>
-                
+
                 {/* Worker */}
                 <li className="nav-item w-100">
-                  <a 
-                    href="#" 
-                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${activeSubmenu === 'dashboard' ? 'active' : ''}`}
+                  <a
+                    href="/"
+                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${
+                      activeSubmenu === "dashboard" ? "active" : ""
+                    }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      this.toggleSubmenu('dashboard');
+                      this.toggleSubmenu("dashboard");
                       navigate("/Worker"); // Using navigate from props
                     }}
                   >
                     <i className="fs-5 bi-speedometer2 nav-icon text-primary me-2"></i>
                     <span className="ms-1 d-none d-sm-inline">Worker</span>
-                    <i className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${activeSubmenu === 'dashboard' ? 'rotate-180' : ''}`}></i>
+                    <i
+                      className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${
+                        activeSubmenu === "dashboard" ? "rotate-180" : ""
+                      }`}
+                    ></i>
                   </a>
-                  <ul className={`nav flex-column ms-1 ps-4 ${activeSubmenu === 'dashboard' ? 'submenu open' : 'submenu'}`}>
+                  <ul
+                    className={`nav flex-column ms-1 ps-4 ${
+                      activeSubmenu === "dashboard" ? "submenu open" : "submenu"
+                    }`}
+                  >
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#3498db" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#3498db" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Analytics</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#2ecc71" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#2ecc71" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Reports</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#e74c3c" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e74c3c" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Metrics</span>
-                        <span className="status-badge badge bg-danger ms-auto d-none d-sm-flex">New</span>
+                        <span className="status-badge badge bg-danger ms-auto d-none d-sm-flex">
+                          New
+                        </span>
                       </a>
                     </li>
                   </ul>
                 </li>
-                
+
                 {/* JobSection */}
                 <li className="nav-item w-100">
-                  <a 
-                    href="#" 
-                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${activeSubmenu === 'dashboard' ? 'active' : ''}`}
+                  <a
+                    href="/"
+                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${
+                      activeSubmenu === "dashboard" ? "active" : ""
+                    }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      this.toggleSubmenu('dashboard');
+                      this.toggleSubmenu("dashboard");
                       navigate("/JobSection"); // Using navigate from props
                     }}
                   >
                     <i className="fs-5 bi-speedometer2 nav-icon text-primary me-2"></i>
                     <span className="ms-1 d-none d-sm-inline">Job Section</span>
-                    <i className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${activeSubmenu === 'dashboard' ? 'rotate-180' : ''}`}></i>
+                    <i
+                      className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${
+                        activeSubmenu === "dashboard" ? "rotate-180" : ""
+                      }`}
+                    ></i>
                   </a>
-                  <ul className={`nav flex-column ms-1 ps-4 ${activeSubmenu === 'dashboard' ? 'submenu open' : 'submenu'}`}>
+                  <ul
+                    className={`nav flex-column ms-1 ps-4 ${
+                      activeSubmenu === "dashboard" ? "submenu open" : "submenu"
+                    }`}
+                  >
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#3498db" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#3498db" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Analytics</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#2ecc71" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#2ecc71" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Reports</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center">
-                        <span className="feature-dot" style={{ backgroundColor: "#e74c3c" }}></span>
+                      <a
+                        href="/"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e74c3c" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Metrics</span>
-                        <span className="status-badge badge bg-danger ms-auto d-none d-sm-flex">New</span>
+                        <span className="status-badge badge bg-danger ms-auto d-none d-sm-flex">
+                          New
+                        </span>
                       </a>
                     </li>
                   </ul>
                 </li>
                 {/* Employee */}
                 <li className="nav-item w-100">
-                  <a 
-                    href="#" 
-                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${activeSubmenu === 'dashboard' ? 'active' : ''}`}
+                  <a
+                    href="/"
+                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${
+                      activeSubmenu === "dashboard" ? "active" : ""
+                    }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      this.toggleSubmenu('dashboard');
+                      this.toggleSubmenu("dashboard");
                       navigate("/Salary"); // Using navigate from props
                     }}
-                  ><i className="fs-5 bi-speedometer2 nav-icon text-primary me-2"></i>
-                  <span className="ms-1 d-none d-sm-inline">Salary</span>
-                  <i className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${activeSubmenu === 'dashboard' ? 'rotate-180' : ''}`}></i>
+                  >
+                    <i className="fs-5 bi-speedometer2 nav-icon text-primary me-2"></i>
+                    <span className="ms-1 d-none d-sm-inline">Salary</span>
+                    <i
+                      className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${
+                        activeSubmenu === "dashboard" ? "rotate-180" : ""
+                      }`}
+                    ></i>
                   </a>
-                    
-                  
-                  
                 </li>
-                
+
                 {/* Bonus */}
                 <li className="nav-item w-100">
-                  <a 
-                    href="#" 
-                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${activeSubmenu === 'Bonus' ? 'active' : ''}`}
+                  <a
+                    href="#"
+                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${
+                      activeSubmenu === "Bonus" ? "active" : ""
+                    }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      this.toggleSubmenu('Bonus');
+                      this.toggleSubmenu("Bonus");
                     }}
                   >
-                    <i className="fs-5 bi-grid nav-icon text-warning me-2" style={{ color: "#e67e22" }}></i>
+                    <i
+                      className="fs-5 bi-grid nav-icon text-warning me-2"
+                      style={{ color: "#e67e22" }}
+                    ></i>
                     <span className="ms-1 d-none d-sm-inline">Bonus</span>
-                    <i className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${activeSubmenu === 'Bonus' ? 'rotate-180' : ''}`}></i>
+                    <i
+                      className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${
+                        activeSubmenu === "Bonus" ? "rotate-180" : ""
+                      }`}
+                    ></i>
                   </a>
-                  <ul className={`nav flex-column ms-1 ps-4 ${activeSubmenu === 'Bonus' ? 'submenu open' : 'submenu'}`}>
+                  <ul
+                    className={`nav flex-column ms-1 ps-4 ${
+                      activeSubmenu === "Bonus" ? "submenu open" : "submenu"
+                    }`}
+                  >
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center" onClick={(e) => {
-                      e.preventDefault();
-                      this.toggleSubmenu('dashboard');
-                      navigate("/BonusType"); // Using navigate from props
-                    }}>
-                        <span className="feature-dot" style={{ backgroundColor: "#e67e22" }}></span>
+                      <a
+                        href="#"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          this.toggleSubmenu("dashboard");
+                          navigate("/BonusType"); // Using navigate from props
+                        }}
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e67e22" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Bonus Type</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center" onClick={() => navigate("/BonusEid")}>
-                        <span className="feature-dot" style={{ backgroundColor: "#e67e22" }}></span>
+                      <a
+                        href="#"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                        onClick={() => navigate("/BonusEid")}
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e67e22" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Eid Bonus</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center" onClick={() => navigate("/LeaveTyp")}>
-                        <span className="feature-dot" style={{ backgroundColor: "#e67e22" }}></span>
+                      <a
+                        href="#"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                        onClick={() => navigate("/LeaveTyp")}
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e67e22" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Leave Type</span>
                       </a>
                     </li>
@@ -450,158 +673,191 @@ class HomePage extends Component {
                     </li> */}
                   </ul>
                 </li>
-                
+
                 {/* Wages */}
                 <li className="nav-item w-100">
-                  <a 
-                    href="#" 
-                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${activeSubmenu === 'Wages' ? 'active' : ''}`}
+                  <a
+                    href="#"
+                    className={`nav-link d-flex align-items-center text-white py-2 px-3 menu-item ${
+                      activeSubmenu === "Wages" ? "active" : ""
+                    }`}
                     onClick={(e) => {
                       e.preventDefault();
-                      this.toggleSubmenu('Wages');
+                      this.toggleSubmenu("Wages");
                     }}
                   >
-                    <i className="fs-5 bi-grid nav-icon text-warning me-2" style={{ color: "#e67e22" }}></i>
+                    <i
+                      className="fs-5 bi-grid nav-icon text-warning me-2"
+                      style={{ color: "#e67e22" }}
+                    ></i>
                     <span className="ms-1 d-none d-sm-inline">Wages</span>
-                    <i className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${activeSubmenu === 'Wages' ? 'rotate-180' : ''}`}></i>
+                    <i
+                      className={`bi-chevron-down ms-auto d-none d-sm-inline chevron-icon ${
+                        activeSubmenu === "Wages" ? "rotate-180" : ""
+                      }`}
+                    ></i>
                   </a>
-                  <ul className={`nav flex-column ms-1 ps-4 ${activeSubmenu === 'Wages' ? 'submenu open' : 'submenu'}`}>
-                    
+                  <ul
+                    className={`nav flex-column ms-1 ps-4 ${
+                      activeSubmenu === "Wages" ? "submenu open" : "submenu"
+                    }`}
+                  >
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center" onClick={() => navigate("/Wages")}>
-                        <span className="feature-dot" style={{ backgroundColor: "#e67e22" }}></span>
+                      <a
+                        href="#"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                        onClick={() => navigate("/Wages")}
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e67e22" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Wages</span>
                       </a>
                     </li>
                     <li className="w-100 py-1 submenu-item">
-                      <a href="#" className="nav-link py-1 text-white-50 d-flex align-items-center" onClick={() => navigate("/WagesSlip")}>
-                        <span className="feature-dot" style={{ backgroundColor: "#e67e22" }}></span>
+                      <a
+                        href="#"
+                        className="nav-link py-1 text-white-50 d-flex align-items-center"
+                        onClick={() => navigate("/WagesSlip")}
+                      >
+                        <span
+                          className="feature-dot"
+                          style={{ backgroundColor: "#e67e22" }}
+                        ></span>
                         <span className="d-none d-sm-inline">Wages Slip</span>
                       </a>
                     </li>
-                    
                   </ul>
                 </li>
 
-                
-                
                 {/* OverTime */}
                 <li className="nav-item w-100">
-                  <a href="#" className="nav-link d-flex align-items-center text-white py-2 px-3 menu-item" onClick={() => navigate("/OverTime")}>
+                  <a
+                    href="#"
+                    className="nav-link d-flex align-items-center text-white py-2 px-3 menu-item"
+                    onClick={() => navigate("/OverTime")}
+                  >
                     <i className="fs-5 bi-people nav-icon text-danger me-2"></i>
                     <span className="ms-1 d-none d-sm-inline">Over Time</span>
                   </a>
                 </li>
-
-
               </ul>
-              
+
               {/* User Profile Section */}
               <hr className="dropdown-divider border-top border-secondary opacity-25 w-100 mt-auto" />
               <div className="dropdown pb-4 w-100 px-3">
-                <a href="#" className="d-flex align-items-center text-white text-decoration-none dropdown-toggle py-2 user-profile px-2" 
-                   id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                  <img src="https://github.com/mdo.png" alt="user avatar" width="38" height="38" 
-                       className="rounded-circle border border-light me-2 user-avatar" />
+                <a
+                  href="/"
+                  className="d-flex align-items-center text-white text-decoration-none dropdown-toggle py-2 user-profile px-2"
+                  id="dropdownUser1"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <img
+                    src="src\Images\apple-touch-icon.png"
+                    alt="user avatar"
+                    width="38"
+                    height="38"
+                    className="rounded-circle border border-light me-2 user-avatar"
+                  />
                   <span className="d-none d-sm-inline fw-semibold">Sayeed</span>
-                  <span className="ms-auto d-none d-sm-inline"><i className="bi-chevron-down"></i></span>
+                  <span className="ms-auto d-none d-sm-inline">
+                    <i className="bi-chevron-down"></i>
+                  </span>
                 </a>
-                <ul className="dropdown-menu dropdown-menu-dark text-small shadow-lg animate__animated animate__fadeIn" aria-labelledby="dropdownUser1">
-          {/* ... other dropdown items ... */}
-          <li>
-            <a 
-              className="dropdown-item" 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                this.handleSignOut();
-              }}
-            >
-              <i className="bi-box-arrow-right me-2 text-danger"></i>Sign out
-            </a>
-          </li>
-        </ul>
+                <ul
+                  className="dropdown-menu dropdown-menu-dark text-small shadow-lg animate__animated animate__fadeIn"
+                  aria-labelledby="dropdownUser1"
+                >
+                  {/* ... other dropdown items ... */}
+                  <li>
+                    <a
+                      className="dropdown-item"
+                      href="/"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        this.handleSignOut();
+                      }}
+                    >
+                      <i className="bi-box-arrow-right me-2 text-danger"></i>
+                      Sign out
+                    </a>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
-          
+
           {/* Main Content */}
           <div className="col py-3">
             <div className="container">
               <div className="row mb-4">
-                <div className="col-12">
-                  <h3 className="fw-bold mb-3">Dashboard Overview</h3>
-                  <p className="text-muted">
-                    Welcome to your interactive dashboard with a modern, animated sidebar.
-                  </p>
-                </div>
+                <div className="col-12"></div>
               </div>
-              
+
               <div className="row g-4 mb-4">
                 <div className="col-md-6 col-lg-3">
                   <div className="card bg-primary text-white shadow-sm h-100">
                     <div className="card-body">
-                      <h5 className="card-title">Revenue</h5>
-                      <h3 className="mb-3">$24,750</h3>
+                      <h5 className="card-title">Total Employees</h5>
+                      <h3 className="mb-3">{this.state.employeeCount}</h3>
                       <p className="card-text">
-                        <span className="text-white-50">+12.6% from last month</span>
+                        <span className="text-white-50">
+                          Active employees in system
+                        </span>
                       </p>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="col-md-6 col-lg-3">
                   <div className="card bg-success text-white shadow-sm h-100">
                     <div className="card-body">
-                      <h5 className="card-title">New Users</h5>
-                      <h3 className="mb-3">728</h3>
+                      <h5 className="card-title">Total Workers</h5>
+                      <h3 className="mb-3">{this.state.workerCount}</h3>
                       <p className="card-text">
-                        <span className="text-white-50">+8.3% from last week</span>
+                        <span className="text-white-50">
+                          Active workers in system
+                        </span>
                       </p>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="col-md-6 col-lg-3">
                   <div className="card bg-warning text-dark shadow-sm h-100">
                     <div className="card-body">
-                      <h5 className="card-title">Orders</h5>
-                      <h3 className="mb-3">432</h3>
+                      <h5 className="card-title">Total Job Sections</h5>
+                      <h3 className="mb-3">{this.state.sectionsCount}</h3>
                       <p className="card-text">
-                        <span className="text-dark opacity-75">+17.2% from last week</span>
+                        <span className="text-white-50">
+                          Active job sections in system
+                        </span>
                       </p>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="col-md-6 col-lg-3">
                   <div className="card bg-danger text-white shadow-sm h-100">
                     <div className="card-body">
-                      <h5 className="card-title">Support Tickets</h5>
-                      <h3 className="mb-3">16</h3>
+                      <h5 className="card-title">Total Job Designations</h5>
+                      <h3 className="mb-3">{this.state.jobCount}</h3>
                       <p className="card-text">
-                        <span className="text-white-50">-3 from yesterday</span>
+                        <span className="text-white-50">
+                          Active job designations in system
+                        </span>
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="row">
                 <div className="col-12">
                   <div className="card shadow-sm">
-                    <div className="card-body">
-                      <h5 className="card-title">About this sidebar</h5>
-                      <p className="card-text">
-                        This modern sidebar includes:
-                      </p>
-                      <ul>
-                        <li><strong>Smooth animations</strong> on hover and menu transitions</li>
-                        <li><strong>Colorful interface</strong> with semantic color coding</li>
-                        <li><strong>Interactive elements</strong> including badges and indicators</li>
-                        <li><strong>Fully responsive design</strong> that works on all screen sizes</li>
-                      </ul>
-                    </div>
+                    <div className="card-body"></div>
                   </div>
                 </div>
               </div>
